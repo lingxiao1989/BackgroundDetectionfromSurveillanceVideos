@@ -1,5 +1,5 @@
 import cv2
-vidcap = cv2.VideoCapture('Surveillance Feed_Parking Lot.mp4')
+vidcap = cv2.VideoCapture('Surveillance Feed - Parking Lot.mp4')
 success,image = vidcap.read()
 count = 0
 success = True
