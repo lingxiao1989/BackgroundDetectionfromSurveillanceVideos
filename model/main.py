@@ -1,4 +1,4 @@
-import numpy as np
+import cv2,numpy as np
 import BackgroundPredictor as Predictor
 import BackgroundAnnotator as Annotator
 
@@ -27,8 +27,23 @@ def m_step(background, predictor):
 
 
 def main():
+    # load the video
+    vidcap = cv2.VideoCapture('Surveillance Feed - Parking Lot.mp4')
+    count = 0
+    
     # load frames as list
     frames = []
+    
+    # take one gray frame in each loop and save the frame into the list
+    while (count<3):
+        vidcap.set(cv2.cv.CV_CAP_PROP_POS_MSEC,count*1000) 
+        success,image = vidcap.read()
+        print 'Read a new frame: ', success
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        frames.append(gray)
+        count += 1
+
+
 
     # init background
     background = np.zeros([1, 1])
