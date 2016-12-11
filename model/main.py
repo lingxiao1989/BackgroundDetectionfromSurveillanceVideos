@@ -1,7 +1,7 @@
 import numpy as np
 import pickle
-import BackgroundPredictor as Predictor
-import BackgroundAnnotator as Annotator
+import BackgroundPredictor
+import BackgroundAnnotator
 
 
 # Expectation: output estimated background
@@ -29,7 +29,7 @@ def m_step(background, predictor):
 
 def main():
     # load frames as list
-    with open('../data/Traffic CCTV Full HD 1080p 10Fps_40frames_2sInterval.pkl', 'r') as f:
+    with open('../data/test.pkl', 'r') as f:
         data = pickle.load(f)
     print(data)
     frames = []
@@ -39,7 +39,7 @@ def main():
 
     # iterate e_step and m_step
     # output: background + predictor
-    predictor = Predictor(background)
+    predictor = BackgroundPredictor.BackgroundPredictor(background)
     while True:
         background = e_step(predictor, frames)
         predictor = m_step(background, predictor)
@@ -47,7 +47,7 @@ def main():
             break
 
     # annotate objects in frame list
-    annotator = Annotator(predictor)
+    annotator = BackgroundAnnotator.BackgroundAnnotator(predictor)
     for frame in frames:
         annotator.annotate(frame)
 

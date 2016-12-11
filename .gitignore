@@ -3,5 +3,5 @@
 .settings
 .idea
 *.iml
-*.ipr
 *.iws
+model/*.pyc
