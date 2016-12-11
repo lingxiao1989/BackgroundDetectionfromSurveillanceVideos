@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 import BackgroundPredictor as Predictor
 import BackgroundAnnotator as Annotator
 
@@ -28,6 +29,9 @@ def m_step(background, predictor):
 
 def main():
     # load frames as list
+    with open('../data/Traffic CCTV Full HD 1080p 10Fps_40frames_2sInterval.pkl', 'r') as f:
+        data = pickle.load(f)
+    print(data)
     frames = []
 
     # init background
