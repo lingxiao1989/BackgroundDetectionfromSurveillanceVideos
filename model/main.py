@@ -1,21 +1,32 @@
 import numpy as np
 import pickle
-import BackgroundPredictor
-import BackgroundAnnotator
+import pylab
+from BackgroundPredictor import BackgroundPredictor
+from BackgroundAnnotator import BackgroundAnnotator
 
 
 # Expectation: output estimated background
 def e_step(predictor, frames):
+    weights = []
     # foreach list frames
     #   predict pixel level likelihood as background
     for frame in frames:
-        predictor.predict(frame)
+        # print(frame.shape)
+        weights.append(predictor.predict(frame))
+
+    background = np.zeros_like(frames[0])
 
     # foreach pixel
     #   calculate weighted average for background
+    for i in range(len(weights)):
+        for c in range(3):
+            background[:, :, c] += weights[i] * (frames[i, :, :, c] - predictor.background[:, :, c])
+
+    for c in range(3):
+        background[:, :, c] /= np.sum(weights, axis=0)
 
     # return background
-    return np.zeros([1, 1])
+    return background + predictor.background
 
 
 # Maximization: output better predictor
@@ -28,31 +39,61 @@ def m_step(background, predictor):
 
 
 def main():
-    # load frames as list
     with open('../data/test.pkl', 'r') as f:
         data = pickle.load(f)
-    print(data)
-    frames = []
+    # print(data)
+
+    # load frames as list
+    frames = np.array(data, dtype=np.int8)
+    frames = np.mod(frames + 256, 256)
+    frames = frames.astype(np.float32)
+    print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))
+    show_image(frames[0])
 
     # init background
-    background = np.zeros([1, 1])
+    background = np.sum(frames, axis=0) / float(frames.shape[0])
+    print('range of background:[{}, {}]'.format(np.min(background), np.max(background)))
+    show_image(background)
+
+    # TODO better initial background with external predictor
 
     # iterate e_step and m_step
     # output: background + predictor
-    predictor = BackgroundPredictor.BackgroundPredictor(background)
+    predictor = BackgroundPredictor(background)
+    iter = 0
     while True:
         background = e_step(predictor, frames)
         predictor = m_step(background, predictor)
-        if True:
+        if iter > 15:
             break
+        if iter % 5 == 0:
+            print('iter: {}, range:[{}, {}]'.format(iter, np.min(background), np.max(background)))
+            show_image(background)
+        iter += 1
 
-    # annotate objects in frame list
-    annotator = BackgroundAnnotator.BackgroundAnnotator(predictor)
+    # TODO annotate objects in frame list
+    annotator = BackgroundAnnotator(predictor)
     for frame in frames:
         annotator.annotate(frame)
 
     # output
+    dump_data(background.astype(np.uint8), 'background.pkl')
+    show_image(background)
+
+
+def show_image(image):
+    fig = pylab.figure()
+    fig.suptitle('display image', fontsize=20)
+    pylab.imshow(image.astype(np.uint8))
+
+    # pylab.show()
+
+
+def dump_data(obj, filename):
+    with open('../data/' + filename, 'w') as f:
+        pickle.dump(obj, f)
 
 
 if __name__ == '__main__':
     main()
+    pylab.show()

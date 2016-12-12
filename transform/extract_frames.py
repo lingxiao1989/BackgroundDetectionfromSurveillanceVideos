@@ -29,6 +29,8 @@ def show_timestamp(vid):
     for num, image in enumerate(vid.iter_data()):
         if num % round(vid._meta['fps']):
             continue
+        if num > 300:
+            break
 
         timestamp = float(num) / vid.get_meta_data()['fps']
         print(timestamp)
@@ -61,8 +63,10 @@ def get_frames(vid):
 
 
 if __name__ == '__main__':
-    filename = '../data/Surveillance Feed - Parking Lot.mp4'
+    filename = '../data/CCTV Full HD 1080p 10Fps Zoom 15X.mp4'
     vid = imageio.get_reader(filename, 'ffmpeg')
+
+    show_timestamp(vid)
 
     frames = get_frames(vid)
     with open('../data/test.pkl', 'w') as f:
