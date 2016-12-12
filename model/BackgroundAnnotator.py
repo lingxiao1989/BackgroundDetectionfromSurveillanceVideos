@@ -13,12 +13,18 @@ class BackgroundAnnotator(object):
 
     def annotate(self, frame):
         """ annotate object """
-        # predict background
-        self.predictor.predict(frame)
+        # get background
+        background = np.zeros_like(frame)
+        foreground = np.zeros_like(frame)
+        weights=[]
+        weights=self.predictor.predict(frame)
 
-        # subtract background
-
-        return np.zeros_like(frame)
+        # subtract background & foreground
+        for c in range(3):
+            background[:, :, c] +=weights* (frame[ :, :, c])
+            foreground[:, :, c] +=(1-weights)* (frame[ :, :, c])
+            
+        return background,foreground
 
 
 def load_predictor():
@@ -28,7 +34,11 @@ def load_predictor():
     predictor = BackgroundPredictor(data)
     return predictor
 
-
+def show_image(image):
+    fig = pylab.figure()
+    fig.suptitle('display image', fontsize=20)
+    pylab.imshow(image.astype(np.uint8))
+    
 def load_frames():
     with open('../data/test.pkl', 'r') as f:
         data = pickle.load(f)
@@ -48,4 +58,6 @@ if __name__ == '__main__':
     # TODO annotate objects in frame list
     annotator = BackgroundAnnotator(predictor)
     for frame in frames:
-        annotator.annotate(frame)
+        [background,foreground]=annotator.annotate(frame)
+        show_image(foreground)
+    pylab.show()
