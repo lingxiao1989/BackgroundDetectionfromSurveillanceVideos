@@ -9,6 +9,7 @@ class BackgroundPredictor(object):
     def __init__(self, background):
         self.background = background
         self.grey = self.to_grey()
+        self.sigma = 25  # to decrease
 
     def predict(self, frame):
         # assure equal size
@@ -17,8 +18,7 @@ class BackgroundPredictor(object):
         r, g, b = frame[:, :, 0], frame[:, :, 1], frame[:, :, 2]
         frame_gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 
-        sigma = 25
-        prob = np.exp(- ((frame_gray - self.grey)/sigma)**2)
+        prob = np.exp(- ((frame_gray - self.grey)/self.sigma)**2)
 
         # TODO smooth probability by (y,x)
 

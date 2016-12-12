@@ -69,6 +69,10 @@ def main():
     while True:
         background = e_step(predictor, frames)
         predictor = m_step(background, predictor)
+
+        # damp sigma
+        predictor.sigma *= 0.95
+
         if iter > 15:
             break
         if iter % 5 == 0:
