@@ -2,7 +2,6 @@ import numpy as np
 import pickle
 import pylab
 from BackgroundPredictor import BackgroundPredictor
-from BackgroundAnnotator import BackgroundAnnotator
 
 
 # Expectation: output estimated background
@@ -38,15 +37,21 @@ def m_step(background, predictor):
     return predictor
 
 
-def main():
+def load_frames():
     with open('../data/test.pkl', 'r') as f:
         data = pickle.load(f)
     # print(data)
 
-    # load frames as list
+    # load frames as float
     frames = np.array(data, dtype=np.int8)
     frames = np.mod(frames + 256, 256)
     frames = frames.astype(np.float32)
+    return frames
+
+
+def main():
+    # load frames as list
+    frames = load_frames()
     print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))
     show_image(frames[0])
 
@@ -70,11 +75,6 @@ def main():
             print('iter: {}, range:[{}, {}]'.format(iter, np.min(background), np.max(background)))
             show_image(background)
         iter += 1
-
-    # TODO annotate objects in frame list
-    annotator = BackgroundAnnotator(predictor)
-    for frame in frames:
-        annotator.annotate(frame)
 
     # output
     dump_data(background.astype(np.uint8), 'background.pkl')

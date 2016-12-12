@@ -3,8 +3,17 @@
 ## install
 ### python2.7
 
-### opencv
-- download from http://opencv.org/
-- goto opencv/build/python/2.7 folder.
-- copy cv2.pyd to C:/Python27/lib/site-packeges.
+## extract data file from video
+- run transform/extract_frames.py
+- check output: data/test.pkl
 
+## separate background and foreground
+- input: data/test.pkl
+- run model/main.py
+- check output: data/background.pkl
+
+## annotate frames
+- input[0]: data/background.pkl
+- input[1]: data/test.pkl
+- run model/BackgroundAnnotator.py
+- TBD
