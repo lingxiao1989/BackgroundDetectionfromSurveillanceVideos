@@ -44,35 +44,37 @@ class BackgroundPredictor(object):
 
         xmax = prob.shape[1]-1
         for y in range(1, prob.shape[0]-1):
-            output[y-1, :] = prob[y, :] * gaussian_grid[1][2]
+            output[y-1, :] += prob[y, :] * gaussian_grid[1][2]
 
-            output[y-1, 0:(xmax-1)] = prob[y, 1:xmax] * gaussian_grid[0][2]
-            output[y-1, xmax] = prob[y, xmax] * gaussian_grid[0][2]
+            output[y-1, 0:(xmax-1)] += prob[y, 1:xmax] * gaussian_grid[0][2]
+            output[y-1, xmax] += prob[y, xmax] * gaussian_grid[0][2]
 
-            output[y-1, 1:xmax] = prob[y, 0:(xmax-1)] * gaussian_grid[2][2]
-            output[y-1, 0] = prob[y, 0] * gaussian_grid[2][2]
+            output[y-1, 1:xmax] += prob[y, 0:(xmax-1)] * gaussian_grid[2][2]
+            output[y-1, 0] += prob[y, 0] * gaussian_grid[2][2]
 
-            output[y, 0:(xmax - 1)] = prob[y, 1:xmax] * gaussian_grid[0][1]
-            output[y, xmax] = prob[y, xmax] * gaussian_grid[0][1]
+            output[y, 0:(xmax - 1)] += prob[y, 1:xmax] * gaussian_grid[0][1]
+            output[y, xmax] += prob[y, xmax] * gaussian_grid[0][1]
 
-            output[y, 1:xmax] = prob[y, 0:(xmax - 1)] * gaussian_grid[2][1]
-            output[y, 0] = prob[y, 0] * gaussian_grid[2][1]
+            output[y, 1:xmax] += prob[y, 0:(xmax - 1)] * gaussian_grid[2][1]
+            output[y, 0] += prob[y, 0] * gaussian_grid[2][1]
 
-            output[y + 1, :] = prob[y, :] * gaussian_grid[1][0]
+            output[y + 1, :] += prob[y, :] * gaussian_grid[1][0]
 
-            output[y + 1, 0:(xmax - 1)] = prob[y, 1:xmax] * gaussian_grid[0][0]
-            output[y + 1, xmax] = prob[y, xmax] * gaussian_grid[0][0]
+            output[y + 1, 0:(xmax - 1)] += prob[y, 1:xmax] * gaussian_grid[0][0]
+            output[y + 1, xmax] += prob[y, xmax] * gaussian_grid[0][0]
 
-            output[y + 1, 1:xmax] = prob[y, 0:(xmax - 1)] * gaussian_grid[2][0]
-            output[y + 1, 0] = prob[y, 0] * gaussian_grid[2][0]
+            output[y + 1, 1:xmax] += prob[y, 0:(xmax - 1)] * gaussian_grid[2][0]
+            output[y + 1, 0] += prob[y, 0] * gaussian_grid[2][0]
 
         for y in [0, prob.shape[0]-1]:
-            output[y, 0:(xmax - 1)] = prob[y, 1:xmax] * (gaussian_grid[0][1] + gaussian_grid[0][2])
-            output[y, xmax] = prob[y, xmax] * (gaussian_grid[0][1] + gaussian_grid[0][2])
+            output[y, 0:(xmax - 1)] += prob[y, 1:xmax] * (gaussian_grid[0][1] + gaussian_grid[0][2])
+            output[y, xmax] += prob[y, xmax] * (gaussian_grid[0][1] + gaussian_grid[0][2])
 
-            output[y, 1:xmax] = prob[y, 0:(xmax - 1)] * (gaussian_grid[2][1] + gaussian_grid[2][2])
-            output[y, 0] = prob[y, 0] * (gaussian_grid[2][1] + gaussian_grid[2][2])
+            output[y, 1:xmax] += prob[y, 0:(xmax - 1)] * (gaussian_grid[2][1] + gaussian_grid[2][2])
+            output[y, 0] += prob[y, 0] * (gaussian_grid[2][1] + gaussian_grid[2][2])
 
-            output[y, :] = prob[y, :] * gaussian_grid[1][2]
+            output[y, :] += prob[y, :] * gaussian_grid[1][2]
 
+        print('prob: [{}, {}]'.format(np.min(prob), np.max(prob)))
+        print('outp: [{}, {}]'.format(np.min(output), np.max(output)))
         return output
