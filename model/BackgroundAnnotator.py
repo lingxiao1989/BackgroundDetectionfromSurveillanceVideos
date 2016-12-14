@@ -19,6 +19,8 @@ class BackgroundAnnotator(object):
         foreground = np.zeros_like(frame)
         weights = []
         weights = self.predictor.predict(frame)
+        weights[weights>=0.8]=1
+        weights[weights<0.8]=0
 
         # TODO make it binary with threshold
 
