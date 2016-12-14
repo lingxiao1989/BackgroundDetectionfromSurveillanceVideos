@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 import pylab
+import imageio
 from BackgroundPredictor import BackgroundPredictor
 
 
@@ -60,11 +61,15 @@ def load_frames():
 
 if __name__ == '__main__':
     predictor = load_predictor()
-    frames = load_frames()
+    #frames = load_frames()
+    annotator = BackgroundAnnotator(predictor)
+    reader = imageio.get_reader('../data/CCTV Full HD 1080p 10Fps Zoom 15X.mp4')
+    fps = reader.get_meta_data()['fps']
+    writer = imageio.get_writer('../data/test2_foreground.mp4', fps=fps)
 
     # annotate objects in frame list
-    annotator = BackgroundAnnotator(predictor)
-    for frame in frames:
-        [background, foreground] = annotator.annotate(frame)
-        show_image(foreground)
-    pylab.show()
+    for frame in reader:
+        #show_image(frame)
+        [background,foreground]=annotator.annotate(frame.astype(np.float32))
+        writer.append_data(np.hstack((frame,background)))
+    writer.close()
