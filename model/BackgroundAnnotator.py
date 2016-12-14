@@ -19,10 +19,10 @@ class BackgroundAnnotator(object):
         foreground = np.zeros_like(frame)
         weights = []
         weights = self.predictor.predict(frame)
-        weights[weights>=0.8]=1
-        weights[weights<0.8]=0
 
-        # TODO make it binary with threshold
+        # make it binary with threshold
+        weights[weights >= 0.8] = 1
+        weights[weights < 0.8] = 0
 
         # subtract background & foreground
         for c in range(3):
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     predictor = load_predictor()
     frames = load_frames()
 
-    # TODO annotate objects in frame list
+    # annotate objects in frame list
     annotator = BackgroundAnnotator(predictor)
     for frame in frames:
         [background, foreground] = annotator.annotate(frame)
