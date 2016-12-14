@@ -3,11 +3,17 @@
 ## install
 ### python2.7
 
+## sample video
+- https://www.youtube.com/watch?v=7a3BSb281JM
+
 ## extract data file from video
 - run transform/extract_frames.py
 - check output: data/test.pkl
 
-## separate background and foreground
+## [optional] apply external predictor
+- run model/HaarPredictor.py to get mask
+
+## converge on background
 - input: data/test.pkl
 - run model/main.py
 - check output: data/background.pkl
