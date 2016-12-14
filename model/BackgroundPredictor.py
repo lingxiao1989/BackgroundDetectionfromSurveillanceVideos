@@ -75,6 +75,4 @@ class BackgroundPredictor(object):
 
             output[y, :] += prob[y, :] * gaussian_grid[1][2]
 
-        print('prob: [{}, {}]'.format(np.min(prob), np.max(prob)))
-        print('outp: [{}, {}]'.format(np.min(output), np.max(output)))
         return output
