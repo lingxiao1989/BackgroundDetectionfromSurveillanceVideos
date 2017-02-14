@@ -1,5 +1,4 @@
 # BackgroundDetectionfromSurveillanceVideos
-
 Visit Wiki page for more details
 - https://github.com/lingxiao1989/BackgroundDetectionfromSurveillanceVideos/wiki
 
