@@ -1,21 +1,18 @@
 import pickle
 
 from PIL import Image
-
-def load_frames():
-    file_path = '../data/test.pkl'
-    with open(file_path, 'rb') as f:
-        frames = pickle.load(f)
-    # print(data)
-
-    # load frames as float
-    #frames = np.array(data, dtype=np.int8)
-    #frames = np.mod(frames + 256, 256)
-    #frames = frames.astype(np.float32)
-    return frames
-
+from util.dataset import CroppedDataset
 
 def main():
+    """ dataset preparation """
+    file_path = '../data/test.pkl'
+    train_set = CroppedDataset(file_path)
+    train_loader = torch.utils.data.DataLoader(
+        train_set, batch_size=opt.batch_size,
+        shuffle=False, num_workers=int(opt.workers),
+        #collate_fn=BaiduCollate(opt.imgH, opt.imgW, keep_ratio=False)
+    )
+
     # load frames as list
     frames = load_frames()
     #print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))
