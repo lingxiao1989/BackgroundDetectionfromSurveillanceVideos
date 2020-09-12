@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from PIL import Image
 import os
+import pickle
 
 def load_frames():
     file_path = '../data/test.pkl'
@@ -16,7 +17,7 @@ def load_frames():
 
 
 class CroppedDataset(Dataset):
-    def __init__(self, data_path, task_type=none, model_type=none):
+    def __init__(self, data_path, task_type=None, model_type=None):
     	with open(data_path, 'rb') as f:
         	self.frames = pickle.load(f)
 
