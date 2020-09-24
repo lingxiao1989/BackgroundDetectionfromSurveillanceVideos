@@ -62,20 +62,11 @@ def sample(model, x, steps, temperature=1.0, sample=False, top_k=None):
 
     return x
 
-# make deterministic
-from mingpt.utils import set_seed
-set_seed(42)
-
 # pytorch helpfully makes it easy to download datasets, e.g. the common CIFAR-10 https://www.kaggle.com/c/cifar-10
-root = './'
-train_data = torchvision.datasets.CIFAR10(root, train=True, transform=None, target_transform=None, download=True)
-test_data  = torchvision.datasets.CIFAR10(root, train=False, transform=None, target_transform=None, download=True)
-print(len(train_data), len(test_data))
+#root = './'
+#train_data = torchvision.datasets.CIFAR10(root, train=True, transform=None, target_transform=None, download=True)
+#test_data  = torchvision.datasets.CIFAR10(root, train=False, transform=None, target_transform=None, download=True)
 
-# get random 5 pixels per image and stack them all up as rgb values to get half a million random pixels
-pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(32*32, 3)[torch.randperm(32*32)[:5], :]
-px = torch.cat([pluck_rgb(x) for x, y in train_data], dim=0).float()
-print(px.size())
 
 # run kmeans to get our codebook
 
@@ -93,30 +84,6 @@ def kmeans(x, ncluster, niter=10):
         print('done step %d/%d, re-initialized %d dead clusters' % (i+1, niter, ndead))
         c[nanix] = x[torch.randperm(N)[:ndead]] # re-init dead clusters
     return c
-
-ncluster = 512
-with torch.no_grad():
-    C = kmeans(px, ncluster, niter=8)
-
-print(C.size())
-
-
-# encode the training examples with our codebook to visualize how much we've lost in the discretization
-n_samples = 16
-ncol = 8
-nrow = n_samples // ncol + 1
-plt.figure(figsize=(20, 10))
-for i in range(n_samples):
-    
-    # encode and decode random data
-    x, y = train_data[np.random.randint(0, len(train_data))]
-    xpt = torch.from_numpy(np.array(x)).float().view(32*32, 3)
-    ix = ((xpt[:, None, :] - C[None, :, :])**2).sum(-1).argmin(1) # cluster assignments for each pixel
-    
-    # these images should look normal ideally
-    plt.subplot(nrow, ncol, i+1)
-    plt.imshow(C[ix].view(32, 32, 3).numpy().astype(np.uint8))
-    plt.axis('off')
 
 from torch.utils.data import Dataset
 
@@ -143,12 +110,8 @@ class ImageDataset(Dataset):
         a = ((x[:, None, :] - self.clusters[None, :, :])**2).sum(-1).argmin(1) # cluster assignments
         return a[:-1], a[1:] # always just predict the next one in the sequence
 
-train_dataset = ImageDataset(train_data, C)
-test_dataset = ImageDataset(test_data, C)
-train_dataset[0][0] # one example image flattened out into integers
-
 from model.minGTP import GPT, GPTConfig, GPT1Config
-
+'''
 # we'll do something a bit smaller
 mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size,
                   embd_pdrop=0.0, resid_pdrop=0.0, attn_pdrop=0.0,
@@ -214,21 +177,61 @@ for i in range(n_samples):
     plt.subplot(nrow, ncol, i+1)
     plt.imshow(C[pxi].view(32, 32, 3).numpy().astype(np.uint8))
     plt.axis('off')
-
+'''
 def main():
+    set_seed(42)
+
     """ dataset preparation """
     file_path = 'data/test.pkl'
-    train_set = CroppedDataset(file_path)
+    train_data = CroppedDataset(file_path)
+    '''
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=16,
         shuffle=False, num_workers=int(4),
         #collate_fn=BaiduCollate(opt.imgH, opt.imgW, keep_ratio=False)
     )
+'''
+    print(len(train_data))
+
+    # get random 5 pixels per image and stack them all up as rgb values to get half a million random pixels
+    pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(32*32, 3)[torch.randperm(32*32)[:5], :]
+    px = torch.cat([pluck_rgb(x) for x, y in train_data], dim=0).float()
+    print(px.size())
 
     # load frames as list
     #frames = load_frames()
     #print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))
     #frames[0].show()
+
+
+    ncluster = 512
+    with torch.no_grad():
+        C = kmeans(px, ncluster, niter=8)
+
+    print(C.size())
+
+
+    # encode the training examples with our codebook to visualize how much we've lost in the discretization
+    n_samples = 16
+    ncol = 8
+    nrow = n_samples // ncol + 1
+    plt.figure(figsize=(20, 10))
+    for i in range(n_samples):
+            
+        # encode and decode random data
+        x, y = train_data[np.random.randint(0, len(train_data))]
+        xpt = torch.from_numpy(np.array(x)).float().view(32*32, 3)
+        ix = ((xpt[:, None, :] - C[None, :, :])**2).sum(-1).argmin(1) # cluster assignments for each pixel
+        
+        # these images should look normal ideally
+        plt.subplot(nrow, ncol, i+1)
+        plt.imshow(C[ix].view(32, 32, 3).numpy().astype(np.uint8))
+        plt.axis('off')
+
+
+    train_dataset = ImageDataset(train_data, C)
+    test_dataset = ImageDataset(test_data, C)
+    train_dataset[0][0] # one example image flattened out into integers
 
 if __name__ == '__main__':
     main()
