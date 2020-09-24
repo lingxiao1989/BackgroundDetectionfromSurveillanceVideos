@@ -1,7 +1,7 @@
 import pickle
 
 from PIL import Image
-from utils.dataset import CroppedDataset
+#from utils.dataset import CroppedDataset
 import random
 import numpy as np
 import torch
@@ -59,7 +59,7 @@ def sample(model, x, steps, temperature=1.0, sample=False, top_k=None):
             _, ix = torch.topk(probs, k=1, dim=-1)
         # append to the sequence and continue
         x = torch.cat((x, ix), dim=1)
-
+    
     return x
 
 # pytorch helpfully makes it easy to download datasets, e.g. the common CIFAR-10 https://www.kaggle.com/c/cifar-10
@@ -102,7 +102,7 @@ class ImageDataset(Dataset):
         
     def __len__(self):
         return len(self.pt_dataset)
-
+        
     def __getitem__(self, idx):
         x, y = self.pt_dataset[idx]
         x = torch.from_numpy(np.array(x)).view(-1, 3) # flatten out all pixels
@@ -182,8 +182,8 @@ def main():
     set_seed(42)
 
     """ dataset preparation """
-    file_path = 'data/test.pkl'
-    train_data = CroppedDataset(file_path)
+    #file_path = 'data/test.pkl'
+    #train_data = CroppedDataset(file_path)
     '''
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=16,
@@ -191,6 +191,10 @@ def main():
         #collate_fn=BaiduCollate(opt.imgH, opt.imgW, keep_ratio=False)
     )
 '''
+    root = './'
+    train_data = torchvision.datasets.CIFAR10(root, train=True, transform=None, target_transform=None, download=True)
+    test_data  = torchvision.datasets.CIFAR10(root, train=False, transform=None, target_transform=None, download=True)
+
     print(len(train_data))
 
     # get random 5 pixels per image and stack them all up as rgb values to get half a million random pixels
