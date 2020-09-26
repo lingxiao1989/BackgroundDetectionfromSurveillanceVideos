@@ -25,6 +25,6 @@ class CroppedDataset(Dataset):
         return len(self.frames)
 
     def __getitem__(self, index):
-        return self.frames[index]
+        return self.frames[index], index
 
 

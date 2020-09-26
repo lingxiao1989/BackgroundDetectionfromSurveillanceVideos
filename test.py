@@ -1,7 +1,7 @@
 import pickle
 
 from PIL import Image
-#from utils.dataset import CroppedDataset
+from utils.dataset import CroppedDataset
 import random
 import numpy as np
 import torch
@@ -182,8 +182,8 @@ def main():
     set_seed(42)
 
     """ dataset preparation """
-    #file_path = 'data/test.pkl'
-    #train_data = CroppedDataset(file_path)
+    file_path = 'data/test.pkl'
+    train_data = CroppedDataset(file_path)
     '''
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=16,
@@ -191,14 +191,15 @@ def main():
         #collate_fn=BaiduCollate(opt.imgH, opt.imgW, keep_ratio=False)
     )
 '''
-    root = './'
-    train_data = torchvision.datasets.CIFAR10(root, train=True, transform=None, target_transform=None, download=True)
-    test_data  = torchvision.datasets.CIFAR10(root, train=False, transform=None, target_transform=None, download=True)
+    # root = './'
+    # train_data = torchvision.datasets.CIFAR10(root, train=True, transform=None, target_transform=None, download=True)
+    # test_data  = torchvision.datasets.CIFAR10(root, train=False, transform=None, target_transform=None, download=True)
 
     print(len(train_data))
 
     # get random 5 pixels per image and stack them all up as rgb values to get half a million random pixels
-    pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(32*32, 3)[torch.randperm(32*32)[:5], :]
+    pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(512*512, 3)[torch.randperm(512*512)[:5], :]
+    #pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(32*32, 3)[torch.randperm(32*32)[:5], :]
     px = torch.cat([pluck_rgb(x) for x, y in train_data], dim=0).float()
     print(px.size())
 
@@ -224,17 +225,19 @@ def main():
             
         # encode and decode random data
         x, y = train_data[np.random.randint(0, len(train_data))]
-        xpt = torch.from_numpy(np.array(x)).float().view(32*32, 3)
+        xpt = torch.from_numpy(np.array(x)).float().view(512*512, 3)
+        #xpt = torch.from_numpy(np.array(x)).float().view(32*32, 3)        
         ix = ((xpt[:, None, :] - C[None, :, :])**2).sum(-1).argmin(1) # cluster assignments for each pixel
         
         # these images should look normal ideally
         plt.subplot(nrow, ncol, i+1)
-        plt.imshow(C[ix].view(32, 32, 3).numpy().astype(np.uint8))
+        plt.imshow(C[ix].view(512, 512, 3).numpy().astype(np.uint8))
+        #plt.imshow(C[ix].view(32, 32, 3).numpy().astype(np.uint8))
         plt.axis('off')
 
 
     train_dataset = ImageDataset(train_data, C)
-    test_dataset = ImageDataset(test_data, C)
+    #test_dataset = ImageDataset(test_data, C)
     train_dataset[0][0] # one example image flattened out into integers
 
 if __name__ == '__main__':
