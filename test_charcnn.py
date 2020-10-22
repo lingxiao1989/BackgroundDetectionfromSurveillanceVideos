@@ -139,19 +139,25 @@ if __name__ == '__main__':
     train_dataset = CharDataset(text, block_size) # one line of poem is roughly 50 characters
 
     mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size,
-                    n_layer=8, n_head=8, n_embd=512)
+                    n_layer=2, n_head=4, n_embd=256)
     model = GPT(mconf)
 
+    context = "O God, O God!"
+    x = torch.tensor([train_dataset.stoi[s] for s in context], dtype=torch.long)[None,...]
+    print(x)
 
+'''
     # initialize a trainer instance and kick off training
-    tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4,
+    tconf = TrainerConfig(max_epochs=1, batch_size=16, learning_rate=6e-4,
                         lr_decay=True, warmup_tokens=512*20, final_tokens=2*len(train_dataset)*block_size,
                         num_workers=4)
     trainer = Trainer(model, train_dataset, None, tconf)
     trainer.train()
+    trainer.save_checkpoint()
 
     context = "O God, O God!"
     x = torch.tensor([train_dataset.stoi[s] for s in context], dtype=torch.long)[None,...].to(trainer.device)
     y = sample(model, x, 2000, temperature=1.0, sample=True, top_k=10)[0]
     completion = ''.join([train_dataset.itos[int(i)] for i in y])
     print(completion)
+'''

@@ -87,6 +87,9 @@ def kmeans(x, ncluster, niter=10):
 
 from torch.utils.data import Dataset
 
+#TODO: modifiy ImageDataset for image stitching purpose
+# input: each pt_dataset contains two overlapped cropped images and one origin ground truth image
+# getitem: the flattened and cluster assigned sequence of two images and the flattened and cluster assigned sequence of ground truth image.
 class ImageDataset(Dataset):
     """
     wrap up the pytorch CIFAR-10 dataset into our own, which will convert images into sequences of integers
