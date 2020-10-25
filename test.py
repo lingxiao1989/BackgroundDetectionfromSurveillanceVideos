@@ -107,11 +107,15 @@ class ImageDataset(Dataset):
         return len(self.pt_dataset)
         
     def __getitem__(self, idx):
-        x, y = self.pt_dataset[idx]
-        x = torch.from_numpy(np.array(x)).view(-1, 3) # flatten out all pixels
-        x = x[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
-        a = ((x[:, None, :] - self.clusters[None, :, :])**2).sum(-1).argmin(1) # cluster assignments
-        return a[:-1], a[1:] # always just predict the next one in the sequence
+        x, index = self.pt_dataset[idx]
+        x1 = torch.from_numpy(np.array(x[0])).view(-1, 3) # flatten out all pixels
+        x2 = torch.from_numpy(np.array(x[1])).view(-1, 3) # flatten out all pixels
+        X = torch.cat((x1,x2),0)
+        X = X[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
+        X = ((X[:, None, :] - self.clusters[None, :, :])**2).sum(-1).argmin(1) # cluster assignments
+        Y = torch.from_numpy(np.array(x[2])).view(-1, 3) # flatten out all pixels
+        Y = Y[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
+        return X, Y # always just predict the next one in the sequence
 
 from model.minGTP import GPT, GPTConfig, GPT1Config
 '''
@@ -203,7 +207,7 @@ def main():
     # get random 5 pixels per image and stack them all up as rgb values to get half a million random pixels
     pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(512*512, 3)[torch.randperm(512*512)[:5], :]
     #pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(32*32, 3)[torch.randperm(32*32)[:5], :]
-    px = torch.cat([pluck_rgb(x) for x, y in train_data], dim=0).float()
+    px = torch.cat([pluck_rgb(x[2]) for x, y in train_data], dim=0).float()
     print(px.size())
 
     # load frames as list
@@ -228,7 +232,7 @@ def main():
             
         # encode and decode random data
         x, y = train_data[np.random.randint(0, len(train_data))]
-        xpt = torch.from_numpy(np.array(x)).float().view(512*512, 3)
+        xpt = torch.from_numpy(np.array(x[2])).float().view(512*512, 3)
         #xpt = torch.from_numpy(np.array(x)).float().view(32*32, 3)        
         ix = ((xpt[:, None, :] - C[None, :, :])**2).sum(-1).argmin(1) # cluster assignments for each pixel
         

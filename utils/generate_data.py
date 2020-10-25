@@ -19,24 +19,23 @@ def generate_trace(size, min_size=512 ):
     return step
 
 def generate_GTP_data(img, min_size=1024 ):
-    weight=img.size[0]
+    width=img.size[0]
     height=img.size[1]
-    overlap_ratio=random.randint(1,99)/100
     step=[]
-    for i in range (0,(height-min_size),50):
+    for i in range (0,(height-2*min_size),50):
         y_start=i
-        for j in range (0,(weight-min_size),50):
-            overlap_ratio=int(min_size*random.randint(1,99)/100)
-            crop1=[]
-            crop2=[]
-            crop3=[]
+        for j in range (0,(width-2*min_size),50):
+            overlap_pixels=int(min_size*random.randint(1,99)/100)
+            temp=[]
             x_start=j
             crop1=[x_start, y_start, x_start+min_size, y_start+min_size]
-            crop2=[x_start+overlap_ratio, y_start+overlap_ratio, x_start+overlap_ratio+min_size, y_start+overlap_ratio+min_size]
-            crop3=[x_start, y_start, x_start+overlap_ratio+min_size, y_start+overlap_ratio+min_size]
-            step.append(crop1)
-            step.append(crop2)
-            step.append(crop3)
+            crop2=[x_start+overlap_pixels, y_start+overlap_pixels, x_start+overlap_pixels+min_size, y_start+overlap_pixels+min_size]
+            crop3=[x_start, y_start, x_start+overlap_pixels+min_size, y_start+overlap_pixels+min_size]
+            temp.append(crop1)
+            temp.append(crop2)
+            temp.append(crop3)
+            step.append(temp)
+
     return step
 
 '''
@@ -68,14 +67,22 @@ def main():
 
     img = Image.open("../data/surveillance_pic1.jpg")
     
-    
-    sample = generate_GTP_data(img)
+    IMAGE_SIZE=512
+    sample = generate_GTP_data(img, IMAGE_SIZE)
     frames = []
 
-    for roi in trace_point:
-        print(roi)
-        cropped = img.crop(roi)
-        frames.append(cropped)
+    for rois in sample:
+        print(rois)
+        x1=rois[0]
+        x2=rois[1]
+        y=rois[2]
+        imgs=[]
+        imgs.append(img.crop(x1))
+        imgs.append(img.crop(x2))
+        imgs.append(img.crop(y).resize((IMAGE_SIZE, IMAGE_SIZE), Image.ANTIALIAS))
+        #img.crop(x1).show()
+
+        frames.append(imgs)
 
     #cropped.show()
     #print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))
