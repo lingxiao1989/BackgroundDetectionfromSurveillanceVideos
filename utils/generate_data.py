@@ -70,6 +70,7 @@ def main():
     IMAGE_SIZE=512
     sample = generate_GTP_data(img, IMAGE_SIZE)
     frames = []
+    i=0
 
     for rois in sample:
         print(rois)
@@ -81,8 +82,10 @@ def main():
         imgs.append(img.crop(x2))
         imgs.append(img.crop(y).resize((IMAGE_SIZE, IMAGE_SIZE), Image.ANTIALIAS))
         #img.crop(x1).show()
-
+        i+=1
         frames.append(imgs)
+        if i>150:
+            break
 
     #cropped.show()
     #print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))

@@ -98,7 +98,7 @@ class ImageDataset(Dataset):
     def __init__(self, pt_dataset, clusters, perm=None):
         self.pt_dataset = pt_dataset
         self.clusters = clusters
-        self.perm = torch.arange(32*32) if perm is None else perm
+        self.perm = torch.arange(512*512) if perm is None else perm
         
         self.vocab_size = clusters.size(0)
         self.block_size = 32*32 - 1
@@ -108,13 +108,18 @@ class ImageDataset(Dataset):
         
     def __getitem__(self, idx):
         x, index = self.pt_dataset[idx]
+        #print(x)
         x1 = torch.from_numpy(np.array(x[0])).view(-1, 3) # flatten out all pixels
         x2 = torch.from_numpy(np.array(x[1])).view(-1, 3) # flatten out all pixels
-        X = torch.cat((x1,x2),0)
-        X = X[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
-        X = ((X[:, None, :] - self.clusters[None, :, :])**2).sum(-1).argmin(1) # cluster assignments
+        x1 = x1[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
+        x2 = x2[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
+        x1 = ((x1[:, None, :] - self.clusters[None, :, :])**2).sum(-1).argmin(1) # cluster assignments
+        x2 = ((x2[:, None, :] - self.clusters[None, :, :])**2).sum(-1).argmin(1) # cluster assignments        
         Y = torch.from_numpy(np.array(x[2])).view(-1, 3) # flatten out all pixels
         Y = Y[self.perm].float() # reshuffle pixels with any fixed permutation and -> float
+        X = torch.cat((x1,x2),0)
+        #print(x1.size())
+        #print(X.size())
         return X, Y # always just predict the next one in the sequence
 
 from model.minGTP import GPT, GPTConfig, GPT1Config
@@ -218,7 +223,7 @@ def main():
 
     ncluster = 512
     with torch.no_grad():
-        C = kmeans(px, ncluster, niter=8)
+        C = kmeans(px, ncluster, niter=5)
 
     print(C.size())
 
@@ -245,7 +250,8 @@ def main():
 
     train_dataset = ImageDataset(train_data, C)
     #test_dataset = ImageDataset(test_data, C)
-    train_dataset[0][0] # one example image flattened out into integers
+    print(train_dataset[0][0].size()) # one example image flattened out into integers
 
 if __name__ == '__main__':
     main()
+
