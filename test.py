@@ -1,7 +1,7 @@
 import pickle
 
 from PIL import Image
-from utils.dataset import CroppedDataset
+
 import random
 import numpy as np
 import torch
@@ -14,6 +14,11 @@ import torch
 import matplotlib.pyplot as plt
 # set up logging
 import logging
+
+from model.minGTP import GPT, GPTConfig, GPT1Config
+from utils.dataset import CroppedDataset
+from model.trainer import Trainer, TrainerConfig
+
 logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
@@ -122,8 +127,9 @@ class ImageDataset(Dataset):
         #print(X.size())
         return X, Y # always just predict the next one in the sequence
 
-from model.minGTP import GPT, GPTConfig, GPT1Config
 '''
+from model.minGTP import GPT, GPTConfig, GPT1Config
+
 # we'll do something a bit smaller
 mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size,
                   embd_pdrop=0.0, resid_pdrop=0.0, attn_pdrop=0.0,
@@ -210,7 +216,7 @@ def main():
     print(len(train_data))
 
     # get random 5 pixels per image and stack them all up as rgb values to get half a million random pixels
-    pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(512*512, 3)[torch.randperm(512*512)[:5], :]
+    pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(512*512, 3)[torch.randperm(512*512)[:10], :]
     #pluck_rgb = lambda x: torch.from_numpy(np.array(x)).view(32*32, 3)[torch.randperm(32*32)[:5], :]
     px = torch.cat([pluck_rgb(x[2]) for x, y in train_data], dim=0).float()
     print(px.size())
@@ -223,7 +229,7 @@ def main():
 
     ncluster = 512
     with torch.no_grad():
-        C = kmeans(px, ncluster, niter=5)
+        C = kmeans(px, ncluster, niter=2)
 
     print(C.size())
 
@@ -251,6 +257,41 @@ def main():
     train_dataset = ImageDataset(train_data, C)
     #test_dataset = ImageDataset(test_data, C)
     print(train_dataset[0][0].size()) # one example image flattened out into integers
+
+    # we'll do something a bit smaller
+    mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size,
+                    embd_pdrop=0.0, resid_pdrop=0.0, attn_pdrop=0.0,
+                    n_layer=12, n_head=8, n_embd=256)
+    model = GPT(mconf)
+
+
+
+    """
+    Note that I am running on an 8-GPU V100 machine so each GPU has 32GB.
+    If you don't have as many computational resources you have to bring down
+    the batch_size until the model fits into your memory, and then you may
+    also need to adjust the learning rate (e.g. decrease it a bit). Alternatively,
+    you can use an even smaller model up above, bringing down the number of layers,
+    number of heads, and the embedding size.
+    """
+
+    tokens_per_epoch = len(train_data) * train_dataset.block_size
+    train_epochs = 20 # todo run a bigger model and longer, this is tiny
+
+    # initialize a trainer instance and kick off training
+    tconf = TrainerConfig(max_epochs=train_epochs, batch_size=16*8, learning_rate=3e-3,
+                        betas = (0.9, 0.95), weight_decay=0,
+                        lr_decay=True, warmup_tokens=tokens_per_epoch, final_tokens=train_epochs*tokens_per_epoch,
+                        ckpt_path='cifar10_model.pt',
+                        num_workers=8)
+    trainer = Trainer(model, train_dataset, test_dataset, tconf)
+    trainer.train()
+
+    # load the state of the best model we've seen based on early stopping
+    checkpoint = torch.load('cifar10_model.pt')
+    model.load_state_dict(checkpoint)
+
+
 
 if __name__ == '__main__':
     main()

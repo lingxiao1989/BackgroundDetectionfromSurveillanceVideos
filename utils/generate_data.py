@@ -71,7 +71,6 @@ def main():
     sample = generate_GTP_data(img, IMAGE_SIZE)
     frames = []
     i=0
-
     for rois in sample:
         print(rois)
         x1=rois[0]
