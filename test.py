@@ -106,7 +106,7 @@ class ImageDataset(Dataset):
         self.perm = torch.arange(512*512) if perm is None else perm
         
         self.vocab_size = clusters.size(0)
-        self.block_size = 32*32 - 1
+        self.block_size = 512*512 - 1
         
     def __len__(self):
         return len(self.pt_dataset)
@@ -255,9 +255,11 @@ def main():
 
 
     train_dataset = ImageDataset(train_data, C)
-    #test_dataset = ImageDataset(test_data, C)
+    test_dataset = None
     print(train_dataset[0][0].size()) # one example image flattened out into integers
 
+    print(train_dataset.block_size)
+    print(train_dataset.vocab_size)
     # we'll do something a bit smaller
     mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size,
                     embd_pdrop=0.0, resid_pdrop=0.0, attn_pdrop=0.0,
@@ -274,12 +276,11 @@ def main():
     you can use an even smaller model up above, bringing down the number of layers,
     number of heads, and the embedding size.
     """
-
     tokens_per_epoch = len(train_data) * train_dataset.block_size
     train_epochs = 20 # todo run a bigger model and longer, this is tiny
 
     # initialize a trainer instance and kick off training
-    tconf = TrainerConfig(max_epochs=train_epochs, batch_size=16*8, learning_rate=3e-3,
+    tconf = TrainerConfig(max_epochs=train_epochs, batch_size=1, learning_rate=3e-3,
                         betas = (0.9, 0.95), weight_decay=0,
                         lr_decay=True, warmup_tokens=tokens_per_epoch, final_tokens=train_epochs*tokens_per_epoch,
                         ckpt_path='cifar10_model.pt',
@@ -290,6 +291,7 @@ def main():
     # load the state of the best model we've seen based on early stopping
     checkpoint = torch.load('cifar10_model.pt')
     model.load_state_dict(checkpoint)
+
 
 
 
