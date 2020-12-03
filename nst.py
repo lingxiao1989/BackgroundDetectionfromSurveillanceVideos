@@ -109,7 +109,7 @@ def image_loader(image_name, imsize=512):
     return image.to(device, torch.float)
 
 
-style_img = image_loader("./data/cartoon_style.jpg")
+style_img = image_loader("./data/timg.jpg")
 content_img = image_loader("./data/pic.jpg")
 
 print(style_img.size())
@@ -239,9 +239,10 @@ def gram_matrix(input):
 
 class StyleLoss(nn.Module):
 
-    def __init__(self, target_feature):
+    def __init__(self, target_feature, layer_name):
         super(StyleLoss, self).__init__()
         self.target = gram_matrix(target_feature).detach()
+        self.layer_name = layer_name
 
     def forward(self, input):
         G = gram_matrix(input)
@@ -306,6 +307,8 @@ class Normalization(nn.Module):
 # desired depth layers to compute style/content losses :
 content_layers_default = ['conv_4']
 style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
+style_layers_weight = {'conv_1' : 1, 'conv_2' : 0.8, 'conv_3' : 0.8, 'conv_4' : 0.6, 'conv_5' : 0.6}
+
 
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
                                style_img, content_img,
@@ -355,8 +358,8 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
         if name in style_layers:
             # add style loss:
             target_feature = model(style_img).detach()
-            #style_loss = StyleLoss(target_feature)
-            style_loss = ContentLoss(target_feature)
+            style_loss = StyleLoss(target_feature, name)
+            #style_loss = ContentLoss(target_feature)
             model.add_module("style_loss_{}".format(i), style_loss)
             style_losses.append(style_loss)
 
@@ -437,7 +440,7 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             content_score = 0
 
             for sl in style_losses:
-                style_score += sl.loss
+                style_score += sl.loss * style_layers_weight[sl.layer_name]
             for cl in content_losses:
                 content_score += cl.loss
 
