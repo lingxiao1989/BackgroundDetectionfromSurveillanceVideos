@@ -2,28 +2,29 @@ import numpy as np
 import pickle
 import pylab
 from BackgroundPredictor import BackgroundPredictor
-
+from HaarPredictor import HaarPredictor
 
 # Expectation: output estimated background
-def e_step(predictor, frames):
+def e_step(hpredictor,predictor, frames):
+    hweights= []
     weights = []
+	
     # foreach list frames
     #   predict pixel level likelihood as background
     for frame in frames:
         # print(frame.shape)
+        hweights.append(hpredictor.predict(frame.astype(np.uint8)))
         weights.append(predictor.predict(frame))
-
     background = np.zeros_like(frames[0])
-
     # foreach pixel
     #   calculate weighted average for background
     for i in range(len(weights)):
         for c in range(3):
-            background[:, :, c] += weights[i] * (frames[i, :, :, c] - predictor.background[:, :, c])
-
+            background[:, :, c] +=hweights[i]*weights[i] * (frames[i, :, :, c] - predictor.background[:, :, c])
+            #background[:, :, c] *=hweights[i]
     for c in range(3):
         background[:, :, c] /= np.sum(weights, axis=0)
-
+	#print len(hweights),len(weights)
     # return background
     return background + predictor.background
 
@@ -53,7 +54,7 @@ def main():
     # load frames as list
     frames = load_frames()
     print('type:{}, shape:{}, range:[{}, {}]'.format(frames.dtype, frames.shape, np.min(frames), np.max(frames)))
-    show_image(frames[0])
+    #show_image(frames[0])
 
     # init background
     background = np.sum(frames, axis=0) / float(frames.shape[0])
@@ -64,24 +65,21 @@ def main():
 
     # iterate e_step and m_step
     # output: background + predictor
+    hpredictor=HaarPredictor()
     predictor = BackgroundPredictor(background)
     iter = 0
     while True:
-        background = e_step(predictor, frames)
+        background = e_step(hpredictor,predictor, frames)
         predictor = m_step(background, predictor)
-
-        # damp sigma
-        predictor.sigma *= 0.95
-
-        if iter > 15:
+        if iter > 5:
             break
-        if iter % 5 == 0:
+        if iter < 6:
             print('iter: {}, range:[{}, {}]'.format(iter, np.min(background), np.max(background)))
             show_image(background)
         iter += 1
-
+	
     # output
-    dump_data(background.astype(np.uint8), 'background.pkl')
+    dump_data(background.astype(np.uint8), 'background_test.pkl')
     show_image(background)
 
 
